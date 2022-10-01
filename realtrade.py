@@ -5,9 +5,10 @@ import requests
 from ta import trend
 access = "HeHh5v7uflluT2ChATZ0BgcIqo3IAGPSHJgcBzMT"
 secret = "07uTQ7VxPXmspfATpV7YoEPyYkchHinTYMH4IzeB"
-myToken = ""
+myToken = "xoxb-4075533308578-4098742464577-B33ueIPZEv0z25TTCcmRrrE1"
 time_interval = "minute240"
 tick= "KRW-EOS"
+sellcount =0
 def post_message(token, channel, text):
     """슬랙 메시지 전송"""
     response = requests.post("https://slack.com/api/chat.postMessage",
@@ -65,9 +66,9 @@ while True:
     try:
         now = datetime.datetime.now()
         start_time = get_start_time(tick)
-        end_time = start_time + datetime.timedelta(days=1)
+        end_time = start_time + datetime.timedelta(hours=4)
 
-        if start_time < now < end_time - datetime.timedelta(seconds=10):
+        if start_time < now < end_time - datetime.timedelta(seconds=20):
             target_price = get_target_price(tick, 0.5)
             ma60 = get_ma60(tick)
             ma180 = get_ma180(tick)
@@ -76,12 +77,18 @@ while True:
                 krw = get_balance("KRW")
                 if krw > 5000:
                     buy_result = upbit.buy_market_order(tick, krw*0.9995)
-                    post_message(myToken,"#crypto", "BTC buy : " +str(buy_result))
+                    post_message(myToken,"#stock-auto", "BTC buy : " +str(buy_result))
+                    selltime= start_time + datetime.timedelta(hours=8)
         else:
             btc = get_balance("EOS")
-            if btc > 0.00008:
+            current_price= get_current_price(tick)
+            txt= "time inverval" + start_time.strftime("%Y년 %m월 %d일 %H시 %M분 %S.%f초") + "~" + end_time.strftime("%Y년 %m월 %d일 %H시 %M분 %S.%f초") + "no trade" + "price : " +btc
+            sellcount-=1
+            if (btc*current_price > 5000 ) & (selltime-datetime.timedelta(seconds=20) < now <selltime) :
                 sell_result = upbit.sell_market_order(tick, btc*0.9995)
-                post_message(myToken,"#crypto", tick, " buy : " +str(sell_result))
+                post_message(myToken,"#stock-auto", tick, " sell : " +str(sell_result))
+            else :
+                post_message(myToken,"#stock-auto",txt)
         time.sleep(1)
     except Exception as e:
         print(e)
